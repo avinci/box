@@ -4,13 +4,12 @@ module.exports = self;
 var mongoose = require('mongoose');
 var async = require('async');
 var _ = require('underscore');
-var fs = require('fs');
 
 var box = require('./Model.js');
 var DB_URL = process.env.DB_URL;
 var RANDOM_NUMBER = process.env.RANDOM_NUMBER.toString();
 var ENVIRONMENT = process.env.ENVIRONMENT;
-var CRON_INTERVAL = Number(process.env.CRON_INTERVAL) || 3000;
+var CRON_INTERVAL = 3000;
 var COLOR = '#000';
 
 function worker() {
@@ -25,10 +24,12 @@ function worker() {
       updatedAt: Date.now()
     }
   };
-  console.log(updatedBox);
+
   var bag = {};
   bag.oldBox = oldBox;
   bag.updatedBox = updatedBox;
+  console.log(bag);
+
   async.series([
       _findOldBoxes.bind(null, bag),
       _removeOldBoxes.bind(null, bag),
@@ -39,7 +40,8 @@ function worker() {
         console.log('Error: ', err);
       console.log('Going for sleep for ', CRON_INTERVAL, 'milli-seconds');
       _.delay(worker, CRON_INTERVAL);
-    });
+    }
+  );
 }
 
 function _findOldBoxes(bag, next) {
@@ -68,22 +70,26 @@ function _removeOldBoxes(bag, next) {
 }
 
 function _updateThisBox(bag, next) {
-  box.update(bag.oldBox, bag.updatedBox, {upsert: true}, function (err) {
-    return next(err);
-  });
+  box.update(bag.oldBox, bag.updatedBox, {upsert: true},
+    function (err) {
+      return next(err);
+    }
+  );
 }
 
 function connectToMongo(callback) {
-  mongoose.connect(DB_URL, {}, function (err) {
-    if (err) {
-      console.log('Error connecting to mongo database: ', err);
-      console.log('DB_URL:', DB_URL);
+  mongoose.connect(DB_URL, {},
+    function (err) {
+      if (err) {
+        console.log('Error connecting to mongo database: ', err);
+        console.log('DB_URL:', DB_URL);
+      }
+      else {
+        console.log('Successfully connected to mongo');
+      }
+      return callback(err);
     }
-    else {
-      console.log('Successfully connected to mongo');
-    }
-    return callback(err);
-  });
+  );
 }
 
 function checkEnvironmentVariables() {
