@@ -4,13 +4,12 @@ export BRANCH=master
 export IMAGE_NAME=avinci/box
 export IMAGE_TAG=$BRANCH.$BUILD_NUMBER
 export RES_DOCKER_CREDS=docker-creds
-export RES_DOCKER_CREDS_INT=avinci-dh.json
 export RES_BOX_REPO=box-repo
 export RES_BOX_IMAGE=box-img
 
 dockerBuild() {
   echo "Starting Docker build for" $IMAGE_NAME:$IMAGE_TAG
-  cd ./IN/$RES_BOX_REPO/$RES_BOX_REPO
+  cd ./IN/$RES_BOX_REPO/gitRepo
   sudo docker build -t=$IMAGE_NAME:$IMAGE_TAG .
   echo "Completed Docker build for" $IMAGE_NAME:$IMAGE_TAG
 }
@@ -23,7 +22,7 @@ dockerPush() {
 
 dockerLogin() {
   echo "Extracting docker creds"
-  cat ./IN/$RES_DOCKER_CREDS/$RES_DOCKER_CREDS_INT  | jq -r '.formJSONValues | map(.label + "=" + .value)|.[]' > dockerInt.sh
+  cat ./IN/$RES_DOCKER_CREDS/integration.json  | jq -r '.formJSONValues | map(.label + "=" + .value)|.[]' > dockerInt.sh
   . dockerInt.sh
   echo "logging into Docker with username" $username
   docker login -u $username -p $password
